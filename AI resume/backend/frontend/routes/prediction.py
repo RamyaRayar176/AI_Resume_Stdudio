@@ -8,6 +8,10 @@ import urllib.request
 import urllib.error
 import joblib
 from pypdf import PdfReader
+import warnings
+
+# Suppress scikit-learn version mismatch warnings
+warnings.filterwarnings("ignore")
 
 from backend.database import save_prediction, save_resume_upload
 
@@ -100,7 +104,15 @@ def get_risk_category(prob):
 def run_twin_simulations(cgpa, aptitude, projects, internships, certifications, communication):
     def run_eval(c, a, p, i, cert, comm):
         feats = [[c, a, p, i, cert, comm]]
-        return round(model.predict_proba(feats)[0][1] * 100, 2)
+        if isinstance(model, FallbackPlacementModel):
+            return round(model.predict_proba(feats)[0][1] * 100, 2)
+        else:
+            try:
+                import pandas as pd
+                df_feats = pd.DataFrame(feats, columns=["cgpa", "aptitude", "projects", "internships", "certifications", "communication"])
+                return round(model.predict_proba(df_feats)[0][1] * 100, 2)
+            except ImportError:
+                return round(model.predict_proba(feats)[0][1] * 100, 2)
         
     base_p = run_eval(cgpa, aptitude, projects, internships, certifications, communication)
     
@@ -240,7 +252,7 @@ def extract_resume_data(text=None, file=None):
     is_image = False
     
     if file:
-        filename = file.filename.lower()
+        filename = (file.filename or "").lower()
         if filename.endswith(".txt"):
             text = file.read().decode("utf-8", errors="ignore")
         elif filename.endswith(".pdf"):
@@ -291,7 +303,7 @@ def extract_resume_data(text=None, file=None):
         )
         
         if is_image:
-            base64_image = base64.b64encode(file_bytes).decode("utf-8")
+            base64_image = base64.b64encode(file_bytes or b"").decode("utf-8")
             user_content = [
                 {"type": "text", "text": "Extract student metrics from this resume image."},
                 {
@@ -362,7 +374,16 @@ def predict():
         communication
     ]]
 
-    probability = model.predict_proba(features)[0][1]
+    if isinstance(model, FallbackPlacementModel):
+        probability = model.predict_proba(features)[0][1]
+    else:
+        try:
+            import pandas as pd
+            df_features = pd.DataFrame(features, columns=["cgpa", "aptitude", "projects", "internships", "certifications", "communication"])
+            probability = model.predict_proba(df_features)[0][1]
+        except ImportError:
+            probability = model.predict_proba(features)[0][1]
+
     placement_probability = round(probability * 100, 2)
     recommendation = build_recommendation(placement_probability)
     
@@ -416,11 +437,12 @@ def predict_resume():
             UPLOAD_FOLDER = Path(__file__).resolve().parents[2] / "uploads"
             if not UPLOAD_FOLDER.exists():
                 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
-            file_path = UPLOAD_FOLDER / file.filename
+            filename = file.filename or "resume"
+            file_path = UPLOAD_FOLDER / filename
             file_path_str = str(file_path)
             file.save(file_path_str)
             file.seek(0)
-            save_resume_upload(user_email, file.filename, file_path_str)
+            save_resume_upload(user_email, filename, file_path_str)
             
         metrics = extract_resume_data(text=text, file=file)
         
@@ -440,7 +462,16 @@ def predict_resume():
             communication
         ]]
         
-        probability = model.predict_proba(features)[0][1]
+        if isinstance(model, FallbackPlacementModel):
+            probability = model.predict_proba(features)[0][1]
+        else:
+            try:
+                import pandas as pd
+                df_features = pd.DataFrame(features, columns=["cgpa", "aptitude", "projects", "internships", "certifications", "communication"])
+                probability = model.predict_proba(df_features)[0][1]
+            except ImportError:
+                probability = model.predict_proba(features)[0][1]
+            
         placement_probability = round(probability * 100, 2)
         recommendation = build_recommendation(placement_probability)
         

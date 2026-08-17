@@ -302,7 +302,16 @@ def toggle_skill():
             base_communication
         ]]
         
-        probability = model.predict_proba(features)[0][1]
+        if isinstance(model, FallbackPlacementModel):
+            probability = model.predict_proba(features)[0][1]
+        else:
+            try:
+                import pandas as pd
+                df_features = pd.DataFrame(features, columns=["cgpa", "aptitude", "projects", "internships", "certifications", "communication"])
+                probability = model.predict_proba(df_features)[0][1]
+            except ImportError:
+                probability = model.predict_proba(features)[0][1]
+            
         updated_prob = round(probability * 100, 2)
         recommendation = build_recommendation(updated_prob)
         

@@ -9,6 +9,19 @@ if str(BASE_DIR) not in sys.path:
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
+import werkzeug.serving
+
+# Suppress the Flask development server warning banner (red line in terminal)
+original_log = werkzeug.serving._log
+def patched_log(type, message, *args, **kwargs):
+    if "WARNING: This is a development server" in message:
+        lines = message.split('\n')
+        lines = [line for line in lines if "WARNING: This is a development server" not in line]
+        message = '\n'.join(lines)
+    if message.strip():
+        original_log(type, message, *args, **kwargs)
+werkzeug.serving._log = patched_log
+
 
 from backend.database import init_db
 from backend.frontend.routes.auth import auth_bp
@@ -55,4 +68,5 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True, exclude_patterns=["*/.venv/*", "*/node_modules/*", "*/.git/*", "*/scratch/*"])
+
