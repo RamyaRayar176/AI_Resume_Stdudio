@@ -14,7 +14,15 @@ except ImportError:
 	mysql = None
 
 BASE_DIR = Path(__file__).resolve().parent
-SQLITE_DB_PATH = BASE_DIR / "placement.db"
+
+if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
+	SQLITE_DB_PATH = Path("/tmp/placement.db")
+	original_db = BASE_DIR / "placement.db"
+	if not SQLITE_DB_PATH.exists() and original_db.exists():
+		import shutil
+		shutil.copy(original_db, SQLITE_DB_PATH)
+else:
+	SQLITE_DB_PATH = BASE_DIR / "placement.db"
 
 
 def _mysql_config():

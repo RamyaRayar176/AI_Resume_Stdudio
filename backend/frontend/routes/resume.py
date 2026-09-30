@@ -11,7 +11,10 @@ resume_bp = Blueprint(
     __name__
 )
 
-UPLOAD_FOLDER = Path(__file__).resolve().parents[2] / "uploads"
+if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
+    UPLOAD_FOLDER = Path("/tmp/uploads")
+else:
+    UPLOAD_FOLDER = Path(__file__).resolve().parents[2] / "uploads"
 
 if not os.path.exists(
     UPLOAD_FOLDER
