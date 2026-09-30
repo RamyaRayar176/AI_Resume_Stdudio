@@ -1,9 +1,0 @@
-flask
-pandas
-numpy
-scikit-learn
-joblib
-flask-cors
-mysql-connector-python
-python-dotenv
-pypdf
