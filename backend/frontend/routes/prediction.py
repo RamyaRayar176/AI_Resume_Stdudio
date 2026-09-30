@@ -434,7 +434,10 @@ def predict_resume():
             return jsonify({"message": "Please upload a resume file or paste text"}), 400
             
         if file:
-            UPLOAD_FOLDER = Path(__file__).resolve().parents[2] / "uploads"
+            if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
+                UPLOAD_FOLDER = Path("/tmp/uploads")
+            else:
+                UPLOAD_FOLDER = Path(__file__).resolve().parents[2] / "uploads"
             if not UPLOAD_FOLDER.exists():
                 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
             filename = file.filename or "resume"
