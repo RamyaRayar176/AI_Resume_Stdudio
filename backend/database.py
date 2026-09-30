@@ -40,6 +40,7 @@ def _mysql_config():
 		"password": password or "",
 		"database": database,
 		"port": int(os.getenv("MYSQL_PORT", "3306")),
+		"ssl_disabled": False,
 	}
 
 
