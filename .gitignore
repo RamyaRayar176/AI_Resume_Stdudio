@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.db
+
+# Build outputs
+build/
+dist/
+**/build/
+
+# Environment files
+.env
+
+# IDE settings
+.vscode/
+
+# Temp uploads (keep directory struct if needed)
+backend/uploads/*
+!backend/uploads/.gitkeep
